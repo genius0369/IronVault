@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container">
+<div class="card">
+<h2>Register</h2>
+
+<input id="u" placeholder="Username">
+<input id="p" type="password" placeholder="Master Password">
+<button onclick="reg()">Create Account</button>
+
+</div>
+</div>
+
+<script>
+async function reg(){
+  const r = await fetch("/register",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      username:u.value,
+      master:p.value
+    })
+  });
+  if(r.ok) location="/login";
+  else alert("User exists");
+}
+</script>
+</body>
+</html>

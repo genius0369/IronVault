@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vault</title>
+
+<style>
+body{
+  margin:0;
+  font-family:system-ui;
+  background:#0b1220;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+
+.container{
+  width:95%;
+  max-width:520px;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(20px);
+  border-radius:20px;
+  padding:20px;
+}
+
+input,button{
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  border-radius:10px;
+  border:none;
+  font-size:15px;
+}
+
+button{
+  background:#22c55e;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.entry{
+  background:rgba(255,255,255,0.05);
+  padding:10px;
+  margin-top:10px;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h2>🔐 Vault</h2>
+
+<!-- ADD FORM -->
+<input id="site" placeholder="Website">
+<input id="user" placeholder="Username / Email">
+<input id="pass" placeholder="Password">
+
+<button onclick="generate()">🎲 Generate</button>
+<button onclick="addEntry()">➕ Add Password</button>
+
+<hr>
+
+<div id="list"></div>
+
+<hr>
+
+<button onclick="saveVault()">💾 Save</button>
+
+<input type="file" id="fileInput" style="display:none">
+<button onclick="document.getElementById('fileInput').click()">📂 Import Backup</button>
+
+<button onclick="backup()">📦 Backup</button>
+<button onclick="logout()">🚪 Logout</button>
+</div>
+
+<script>
+let vault = [];
+
+function render(){
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  vault.forEach((e,i)=>{
+    list.innerHTML += `
+      <div class="entry">
+        <b>${e.site}</b><br>
+        ${e.user}<br>
+        ********
+        <button onclick="copyPass(${i})">📋 Copy</button>
+      </div>
+    `;
+  });
+}
+
+function addEntry(){
+  const site = siteInput.value;
+  const user = userInput.value;
+  const pass = passInput.value;
+
+  if(!site || !pass) return alert("Fill fields");
+
+  vault.push({site,user,pass});
+  render();
+
+  siteInput.value="";
+  userInput.value="";
+  passInput.value="";
+}
+
+const siteInput=document.getElementById("site");
+const userInput=document.getElementById("user");
+const passInput=document.getElementById("pass");
+
+function copyPass(i){
+  navigator.clipboard.writeText(vault[i].pass);
+  alert("Copied");
+}
+
+function generate(){
+  const chars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%";
+  let p="";
+  for(let i=0;i<16;i++){
+    p+=chars[Math.floor(Math.random()*chars.length)];
+  }
+  passInput.value=p;
+}
+
+function saveVault(){
+  fetch("/save",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({vault:JSON.stringify(vault)})
+  });
+}
+
+function backup(){
+  const blob=new Blob([JSON.stringify(vault)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="vault_backup.json";
+  a.click();
+}
+
+/* 🔥 IMPORT FIX */
+document.getElementById("fileInput").addEventListener("change",e=>{
+  const file=e.target.files[0];
+  const reader=new FileReader();
+
+  reader.onload=function(){
+    try{
+      vault=JSON.parse(reader.result);
+      render();
+      alert("Backup loaded");
+    }catch{
+      alert("Invalid file");
+    }
+  };
+
+  reader.readAsText(file);
+});
+
+function logout(){
+  window.location="/logout";
+}
+
+/* LOAD FROM SERVER */
+fetch("/load")
+.then(r=>r.json())
+.then(d=>{
+  if(d.vault){
+    try{
+      vault=JSON.parse(d.vault);
+      render();
+    }catch{}
+  }
+});
+</script>
+</body>
+</html>

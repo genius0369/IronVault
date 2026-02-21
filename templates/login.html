@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container">
+<div class="card">
+<h2>Login</h2>
+
+<input id="u" placeholder="Username">
+<input id="p" type="password" placeholder="Master Password">
+<button onclick="login()">Login</button>
+
+</div>
+</div>
+
+<script>
+async function login(){
+  const r = await fetch("/login",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      username:u.value,
+      master:p.value
+    })
+  });
+  if(r.ok) location="/dashboard";
+  else alert("Login failed");
+}
+</script>
+</body>
+</html>
